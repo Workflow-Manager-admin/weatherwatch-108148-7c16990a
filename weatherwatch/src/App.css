@@ -6,6 +6,28 @@
   --border-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Added: Theme color variables for dark/light mode adaptation */
+.theme-dark {
+  --main-bg: #181A1B;
+  --main-fg: #fff;
+  --main-card: #23273a;
+  --main-card-alt: #24283B;
+  --main-primary: #2196F3;
+  --main-secondary: #90CAF9;
+  --main-accent: #FFC107;
+  --main-shadow: 0 12px 40px rgba(20,40,70,0.13);
+}
+.theme-light {
+  --main-bg: #eaf1fb;
+  --main-fg: #23273a;
+  --main-card: #ffffff;
+  --main-card-alt: #f5f7fa;
+  --main-primary: #156bc4;
+  --main-secondary: #8bb8ea;
+  --main-accent: #FF9800;
+  --main-shadow: 0 10px 24px #bfd5ed70;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif;
