@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
  * WeatherWatch main container for current weather, forecast, search, geolocation.
  * Applies weather-adaptive background and the specified dark theme.
  */
-const WEATHER_API_KEY = "demo"; // TODO: Replace 'demo' with your OpenWeatherMap API key
+const WEATHER_API_KEY = "6f9e273225293ea2d4479a00d0d2c7ac"; // Updated with user-supplied OpenWeatherMap API key
 const WEATHER_API_BASE = "https://api.openweathermap.org/data/2.5";
 const WEATHER_ICON_URL = "https://openweathermap.org/img/wn/";
 
