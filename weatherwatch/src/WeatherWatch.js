@@ -1,11 +1,23 @@
 import React, { useState, useEffect, useCallback } from "react";
 
-// Utility for temp conversion
+/**
+ * Utility for temperature conversions
+ * C = Celsius, F = Fahrenheit, K = Kelvin
+ */
+// PUBLIC_INTERFACE
 function toF(c) {
   return Math.round((c * 9) / 5 + 32);
 }
 function toC(f) {
   return Math.round(((f - 32) * 5) / 9);
+}
+// PUBLIC_INTERFACE
+function toK(tempC) {
+  return Math.round(tempC + 273.15);
+}
+// PUBLIC_INTERFACE
+function fromK(k) {
+  return Math.round(k - 273.15);
 }
 // PUBLIC_INTERFACE
 /**
@@ -57,11 +69,15 @@ function WeatherWatch() {
 
   // ADDED: Theme and temperature toggles
   const [theme, setTheme] = useState("dark"); // "dark" | "light"
-  const [tempUnit, setTempUnit] = useState("C"); // "C" | "F"
+  // "C" = Celsius, "F" = Fahrenheit, "K" = Kelvin
+  const [tempUnit, setTempUnit] = useState("C");
 
-  // Toggle handlers
+  // PUBLIC_INTERFACE
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
-  const toggleTempUnit = () => setTempUnit((u) => (u === "C" ? "F" : "C"));
+  // Cycles through C -> F -> K -> C ...
+  // PUBLIC_INTERFACE
+  const toggleTempUnit = () =>
+    setTempUnit((u) => (u === "C" ? "F" : u === "F" ? "K" : "C"));
 
   // Theme-aware COLORS and GRADIENTS definitions
   const THEME_COLORS = {
@@ -221,12 +237,20 @@ function WeatherWatch() {
     if (!weather) return null;
     const w = weather.weather[0];
     const iconURL = `${WEATHER_ICON_URL}${w.icon}@4x.png`;
-    // Temperature for card
-    const showTemp =
-      tempUnit === "C"
-        ? Math.round(weather.main.temp)
-        : toF(weather.main.temp);
-    const unitLabel = "°" + tempUnit;
+
+    // Temperature display logic
+    let showTemp, unitLabel;
+    if (tempUnit === "C") {
+      showTemp = Math.round(weather.main.temp);
+      unitLabel = "°C";
+    } else if (tempUnit === "F") {
+      showTemp = toF(weather.main.temp);
+      unitLabel = "°F";
+    } else if (tempUnit === "K") {
+      showTemp = toK(weather.main.temp);
+      unitLabel = "K";
+    }
+
     return (
       <div style={{
         background: themeColors.cardAlt,
@@ -283,10 +307,20 @@ function WeatherWatch() {
           });
           const iconURL = `${WEATHER_ICON_URL}${w.icon}@2x.png`;
           // Min/max temps (always in C from API)
-          const tMin =
-            tempUnit === "C" ? Math.round(f.main.temp_min) : toF(f.main.temp_min);
-          const tMax =
-            tempUnit === "C" ? Math.round(f.main.temp_max) : toF(f.main.temp_max);
+          let tMin, tMax, unitLabel;
+          if (tempUnit === "C") {
+            tMin = Math.round(f.main.temp_min);
+            tMax = Math.round(f.main.temp_max);
+            unitLabel = "°C";
+          } else if (tempUnit === "F") {
+            tMin = toF(f.main.temp_min);
+            tMax = toF(f.main.temp_max);
+            unitLabel = "°F";
+          } else if (tempUnit === "K") {
+            tMin = toK(f.main.temp_min);
+            tMax = toK(f.main.temp_max);
+            unitLabel = "K";
+          }
           return (
             <div key={i}
                  style={{
@@ -309,10 +343,12 @@ function WeatherWatch() {
               <img src={iconURL} alt={w.description} style={{ width: 48, height: 48, margin: "0.45rem 0" }} />
               <span style={{ fontSize: "1.15rem", fontWeight: 700 }}>
                 {tMin}
-                &deg;/
+                {tempUnit === "K" ? "" : <>&deg;</>}
+                /
                 <b>
                   {tMax}
-                  &deg;{tempUnit}
+                  {tempUnit === "K" ? "" : <>&deg;</>}
+                  {unitLabel}
                 </b>
               </span>
               <span style={{ fontSize: "0.98rem", color: themeColors.secondary }}>{w.main}</span>
@@ -388,29 +424,55 @@ function WeatherWatch() {
           >
             {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
           </button>
-          <button
-            aria-label={`Show temperatures in ${tempUnit === "C" ? "Fahrenheit" : "Celsius"}`}
-            onClick={toggleTempUnit}
-            style={{
-              background: themeColors.card,
-              color: themeColors.accent,
-              border: `1.5px solid ${themeColors.accent}40`,
-              borderRadius: "2em",
-              padding: "0.55em 1.25em",
-              fontWeight: 700,
-              fontSize: "1.05rem",
-              cursor: "pointer",
-              outline: "none",
-              marginLeft: "1.4em",
-              boxShadow:
-                theme === "dark"
-                  ? "0 2px 8px #191a2a30"
-                  : "0 2px 6px #ffd1a0aa",
-              transition: "all 0.22s"
-            }}
-          >
-            {tempUnit === "C" ? "°C" : "°F"}
-          </button>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.45em",
+            marginLeft: "1.2em"
+          }}>
+            {["C", "F", "K"].map(unit => (
+              <button
+                key={unit}
+                aria-label={`Show temperatures in ${unit === "C" ? "Celsius" : unit === "F" ? "Fahrenheit" : "Kelvin"}`}
+                onClick={() => setTempUnit(unit)}
+                style={{
+                  background: tempUnit === unit ? themeColors.cardAlt : themeColors.card,
+                  color:
+                    tempUnit === unit
+                      ? (unit === "K" ? "#29b6f6" :
+                          unit === "F" ? themeColors.accent : themeColors.primary)
+                      : (unit === "F" ? themeColors.accent : unit === "K" ? "#29b6f6" : themeColors.primary),
+                  border: `1.5px solid ${
+                    unit === "C"
+                      ? themeColors.primary + (tempUnit === unit ? "95" : "35")
+                      : unit === "F"
+                      ? themeColors.accent + (tempUnit === unit ? "95" : "40")
+                      : "#29b6f6" + (tempUnit === unit ? "a5" : "45")
+                  }`,
+                  borderRadius: "2em",
+                  padding: "0.55em 1.15em",
+                  fontWeight: tempUnit === unit ? 800 : 700,
+                  fontSize: "1.05rem",
+                  cursor: tempUnit === unit ? "default" : "pointer",
+                  outline: "none",
+                  boxShadow:
+                    tempUnit === unit
+                      ? (unit === "F"
+                          ? "0 2px 10px #ffd1a099"
+                          : unit === "C"
+                          ? "0 2px 10px #1b6cff44"
+                          : "0 2px 10px #29b6f688")
+                      : (theme === "dark"
+                        ? "0 2px 8px #191a2a30"
+                        : "0 2px 6px #ffd1a0aa"),
+                  transition: "all 0.22s"
+                }}
+                disabled={tempUnit === unit}
+              >
+                {unit === "C" ? "°C" : unit === "F" ? "°F" : "K"}
+              </button>
+            ))}
+          </div>
         </div>
 
         <h2
